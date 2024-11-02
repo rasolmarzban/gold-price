@@ -1,4 +1,5 @@
 <?php
+defined('ABSPATH') || exit;
 
 use Automattic\WooCommerce\Admin\Marketing\Price;
 
@@ -23,13 +24,14 @@ class CalculateRegular extends GetGoldPrice
         // Create input fields for settings
         woocommerce_wp_checkbox([
             'id' => 'custom_price_calculator_use_api',
-            'label' => __('Use API for Price', 'woocommerce'),
-            'description' => __('Check this box to use the API for fetching the total price.', 'woocommerce'),
+            'label' => __('برای استفاده از نرخ خودکار', 'woocommerce'),
+            'description' => __('.دقت کنید : برای وارد کردن سود و اجرت و مالیات حتما باید این تیک فعال باشد', 'woocommerce'),
         ]);
 
-        $this->add_price_input_field('custom_field_wages', __('Custom Field Wages (%)', 'woocommerce'));
-        $this->add_price_input_field('custom_field_profit', __('Custom Field Profit (%)', 'woocommerce'));
-        $this->add_price_input_field('custom_field_tax', __('Custom Field Tax (%)', 'woocommerce'));
+        $this->add_price_input_field('custom_field_wages', __('اجرت ساخت (%)', 'woocommerce'));
+        $this->add_price_input_field('custom_field_profit', __('سود (%)', 'woocommerce'));
+        $this->add_price_input_field('custom_field_tax', __('مالیات بر ارزش افزوده (%)', 'woocommerce'));
+        $this->add_price_input_field('custom_field_addons', __('قیمت متعلقات اضافی (جواهرات ،نقره،سنگ و...) ', 'woocommerce'));
     }
 
     private function add_price_input_field($id, $label)
@@ -46,19 +48,21 @@ class CalculateRegular extends GetGoldPrice
 
     public function save_custom_price_calculator_fields($post_id)
     {
+
+
         // Save checkbox value
         $use_api = isset($_POST['custom_price_calculator_use_api']) ? 'yes' : 'no';
         update_post_meta($post_id, 'custom_price_calculator_use_api', $use_api);
 
         // Save custom fields
-        $fields = ['custom_field_wages', 'custom_field_profit', 'custom_field_tax'];
+        $fields = ['custom_field_wages', 'custom_field_profit', 'custom_field_tax', 'custom_field_addons'];
         foreach ($fields as $field) {
             $value = isset($_POST[$field]) ? sanitize_text_field($_POST[$field]) : '';
             update_post_meta($post_id, $field, $value);
         }
     }
 
-    public function save_custom_price_calculator_field($post_id)
+    public function save_custom_price_calculator_field($post_id,)
     {
         if (get_post_type($post_id) !== 'product') {
             return;
@@ -70,12 +74,26 @@ class CalculateRegular extends GetGoldPrice
         $this->weight = $this->product->get_weight();
 
         // Combine prices to calculate the total
-        $subtotal = round($this->calculation_current_product_gold() + $this->calculation_calculate_wages() + $this->calculation_calculate_profit() + $this->calculation_calculate_tax(), -3);
+        $subtotal = round($this->calculation_current_product_gold() + $this->calculation_calculate_wages() + $this->calculation_calculate_profit() + $this->calculation_calculate_tax() + $this->get_addons(), -3);
+        update_post_meta($post_id, 'wp_gold_price_subtotal', $subtotal);
 
-        $this->product->set_regular_price($subtotal);
-        $this->product->save();
+        // Check if the product is tagged as a pre-order
+        $is_preorder = get_post_meta($post_id, '_stock_status', true);
+        //error_log("is pre order : " . $is_preorder);
+        if ($is_preorder == "onbackorder") {
+
+            $price_after_discount  = floatval(0.1 * $subtotal);
+            //error_log($price_after_discount);
+            $pre_order_fee = $subtotal - $price_after_discount;
+            //error_log("pre order price is : " . $pre_order_fee);
+
+            $this->product->set_regular_price($pre_order_fee);
+            $this->product->save();
+        } else {
+            $this->product->set_regular_price($subtotal);
+            $this->product->save();
+        }
     }
-
     public function get_wages_percent()
     {
         return $this->get_percent_meta('custom_field_wages');
@@ -90,6 +108,15 @@ class CalculateRegular extends GetGoldPrice
     {
         return $this->get_percent_meta('custom_field_tax');
     }
+    public function get_addons()
+    {
+        if ($this->use_api === 'yes' && $this->weight) {
+            if ($this->fetch_total_price_from_api()) {
+                return floatval(get_post_meta($this->current_post_id, 'custom_field_addon', true));
+            }
+        }
+        return 0;
+    }
 
     private function get_percent_meta($key)
     {
@@ -103,22 +130,22 @@ class CalculateRegular extends GetGoldPrice
 
     public function calculation_current_product_gold()
     {
-        return $this->weight * $this->fetch_total_price_from_api();
+        return floatval($this->weight) * floatval($this->fetch_total_price_from_api());
     }
 
     public function calculation_calculate_wages()
     {
-        return intval($this->calculation_current_product_gold() * $this->get_wages_percent());
+        return floatval($this->calculation_current_product_gold() * $this->get_wages_percent());
     }
 
     public function calculation_calculate_profit()
     {
-        return intval(($this->calculation_current_product_gold() + $this->calculation_calculate_wages()) * $this->get_profit_percent());
+        return floatval(($this->calculation_current_product_gold() + $this->calculation_calculate_wages()) * $this->get_profit_percent());
     }
 
     public function calculation_calculate_tax()
     {
-        return intval(($this->calculation_calculate_profit() + $this->calculation_calculate_wages()) * $this->get_tax_percent());
+        return floatval(($this->calculation_calculate_profit() + $this->calculation_calculate_wages()) * $this->get_tax_percent());
     }
 
     public function getWeightProduct()

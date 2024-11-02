@@ -1,4 +1,5 @@
 <?php
+defined('ABSPATH') || exit;
 require_once GLP_DIR . 'fetch-price.php';
 
 function gold_calculator_box()
@@ -8,24 +9,30 @@ function gold_calculator_box()
     $gold_price = $get_gold_price->fetch_gold_price(); // Store the fetched gold price
 ?>
     <h1><?php echo $gold_price ?></h1>
-    <div id="gold-calculator" style="border: 1px solid #ccc; padding: 20px; margin: 20px 0;">
-        <h3>محاسبه قیمت طلا محصول</h3>
-        <label for="gold-price">قیمت طلا:</label>
-        <input type="number" id="gold-price" name="gold-price" value="<?php echo $gold_price; ?>" required><br><br>
+    <div class="wrap">
+        <div id="gold-calculator">
+            <div class="gold-calculator-title">
+                <h3>محاسبه قیمت طلا محصول</h3>
+            </div>
+            <div class="gold-calculator-form">
+                <label class="gold-calculator-label" for="gold-price">قیمت طلا:</label>
+                <input class="gold-calculator-input" type="number" id="gold-price" name="gold-price" value="<?php echo $gold_price; ?>" required><br><br>
 
-        <label for="weight">وزن:</label>
-        <input type="number" id="weight" name="weight" required><br><br>
+                <label class="gold-calculator-label" for="weight">وزن:</label>
+                <input class="gold-calculator-input" type="number" id="weight" name="weight" required><br><br>
 
-        <label for="wages">اجرت ساخت:</label>
-        <input type="number" id="wages" name="wages" required><br><br>
+                <label class="gold-calculator-label" for="wages">اجرت ساخت:</label>
+                <input class="gold-calculator-input" type="number" id="wages" name="wages" required><br><br>
 
-        <label for="profit">سود:</label>
-        <input type="number" id="profit" name="profit" required><br><br>
+                <label class="gold-calculator-label" for="profit">سود:</label>
+                <input class="gold-calculator-input" type="number" id="profit" name="profit" required><br><br>
 
-        <label for="tax">مالیات:</label>
-        <input type="number" id="tax" name="tax" required><br><br>
+                <label class="gold-calculator-label" for="tax">مالیات:</label>
+                <input class="gold-calculator-input" type="number" id="tax" name="tax" required><br><br>
 
-        <div id="result" style="margin-top: 20px;"></div>
+                <div id="result" style="margin-top: 20px;"></div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -87,7 +94,7 @@ add_shortcode('gold_calculator', 'gold_calculator_box');
 function enqueue_custom_styles()
 {
     // Ensure your path to the CSS file is correct
-    wp_enqueue_style('custom-styles', GLP_ASSETS . 'css/calculator-style.css');
+    wp_enqueue_style('custom-styles', GLP_URL . 'assets/css/calculator-style.css');
 }
 
 add_action('wp_enqueue_scripts', 'enqueue_custom_styles');

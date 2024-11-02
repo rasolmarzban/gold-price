@@ -1,5 +1,5 @@
 <?php
-
+defined('ABSPATH') || exit;
 class GetGoldPrice
 {
     // public $url = 'https://www.tala.ir/banner/?rnd=ZHkacfabyC&ids=,&is-mobile=0&android=0&ios=0&rnd=1263&h=1080&w=1920'; // Ensure the URL is correct

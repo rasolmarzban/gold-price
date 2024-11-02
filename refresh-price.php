@@ -1,4 +1,5 @@
 <?php
+defined('ABSPATH') || exit;
 require_once 'calculate-gold.php'; // Ensure this file is available
 require_once 'gold-var-price.php'; // Ensure this file is available
 
@@ -27,7 +28,7 @@ class Refreshed
     public function add_ten_minutes_cron_schedule($schedules)
     {
         $schedules['ten_minutes'] = array(
-            'interval' => 600, // 600 seconds = 10 minutes
+            'interval' => 60, // 600 seconds = 10 minutes
             'display' => __('Every 10 Minutes')
         );
         return $schedules;
@@ -57,16 +58,16 @@ class Refreshed
                     $goldvarprice->save_custom_variation_price_calculator_fields($product_var_id->get_id(), $variation_id);
 
                     // Log the individual variation being processed
-                    error_log('Updating variation ID: ' . $variation_id);
+                    //error_log('Updating variation ID: ' . $variation_id);
                 }
 
                 // Log after processing all variations for this product
-                error_log('Updated all variations for product ID ' . $product_id . ': ' . implode(', ', $variation_ids));
+                //error_log('Updated all variations for product ID ' . $product_id . ': ' . implode(', ', $variation_ids));
             }
         }
 
         // Log the refresh event
-        error_log('Product prices refreshed for products: ' . implode(',', $product_ids));
+        // error_log('Product prices refreshed for products: ' . implode(',', $product_ids));
     }
 
     public function get_all_products_ids()

@@ -6,7 +6,7 @@
  * Version: 1.0
  * Author: rasolMarzban
  */
-
+defined('ABSPATH') || exit;
 class GoldPrice
 {
     public function __construct()
@@ -32,6 +32,7 @@ class GoldPrice
         include 'gold-var-price.php';
         include 'shortcodes.php';
         include 'refresh-price.php';
+        include 'show-price.php';
         include GLP_TMP . 'users/calculator-gold-price.php';
         if (is_admin()) {
             include GLP_INC . 'admin/admin-menu.php';

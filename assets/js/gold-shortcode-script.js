@@ -1,21 +1,29 @@
 jQuery(document).ready(function($) {
-    $('#').change(function() {
-        var productId = $(this).val();
-        if (productId) { // Check if a product is selected
-            $.ajax({
-                type: 'POST',
-                url: ajaxurl, // WordPress AJAX URL
-                data: {
-                    action: 'get_product_profit',
-                    product_id: productId
-                },
-                success: function(response) {
-                    // Display the returned profit
-                    $('#profit-result').html('Profit: ' + response);
-                }
+    $(".single_variation_wrap").on("show_variation", function(event, variation) {
+        console.log(event.target, 'variation methode 2');
+        console.log(variation.variation_id, 'variation methode 2');
+        var SelectedID = variation.variation_id;
+
+        if (SelectedID) {
+            var actions = ['get_profit_variation', 'get_wages_variation', 'get_tax_variation', 'get_addons_variation'];
+            var displays = ['#profit-display', '#wages-display', '#tax-display', '#addons-display'];
+
+            actions.forEach(function(action, index) {
+                $.ajax({
+                    url: ajaxurl, 
+                    method: 'POST',
+                    data: {
+                        action: action,
+                        variation_id: SelectedID
+                    },
+                    success: function(response) {
+                        $(displays[index]).html(response);
+                    }
+                });
             });
         } else {
-            $('#profit-result').html(''); // Clear the result if no product is selected
+            // Clear all displays if no variation selected
+            $('#profit-display, #wages-display, #tax-display, #addons-display').html('');
         }
     });
 });

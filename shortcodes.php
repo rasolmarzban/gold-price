@@ -1,4 +1,7 @@
 <?php
+
+defined('ABSPATH') || exit;
+
 include_once 'fetch-price.php';
 
 class GoldShortCodes extends GetGoldPrice
@@ -8,14 +11,25 @@ class GoldShortCodes extends GetGoldPrice
         // Usage: You can use the following in a shortcode or wherever needed
         add_shortcode('gold_price', array($this, 'get_gold_price')); // Callback to the method correctly
         add_shortcode('product_wages', array($this, 'get_product_wages'));
-        add_shortcode('product_profit', array($this, 'get_product_profit'));
+        add_shortcode('display_profit', array($this, 'display_profit_shortcode'));
+        add_shortcode('display_wages', array($this, 'display_wages_shortcode'));
+        add_shortcode('display_tax', array($this, 'display_tax_shortcode'));
+        add_shortcode('display_addons', array($this, 'display_addons_shortcode'));
+        add_shortcode('displays_regular_profit', array($this, 'displays_regular_profit_shortcode'));
+        add_shortcode('displays_regular_wages', array($this, 'displays_regular_wages_shortcode'));
+        add_shortcode('displays_regular_tax', array($this, 'displays_regular_tax_shortcode'));
+        add_shortcode('displays_regular_addons', array($this, 'displays_regular_addons_shortcode'));
 
         // ajax request
-        add_action('wp_ajax_get_product_profit', [$this, 'handle_get_product_profit']);
-        add_action('wp_ajax_nopriv_get_product_profit', [$this, 'handle_get_product_profit']);
+        add_action('wp_ajax_get_profit_variation', [$this, 'fetch_profit_variation']);
+        add_action('wp_ajax_nopriv_get_profit_variation', [$this, 'fetch_profit_variation']);
+        add_action('wp_ajax_get_wages_variation', [$this, 'fetch_wages_variation']);
+        add_action('wp_ajax_nopriv_get_wages_variation', [$this, 'fetch_wages_variation']);
+        add_action('wp_ajax_get_tax_variation', [$this, 'fetch_tax_variation']);
+        add_action('wp_ajax_nopriv_get_tax_variation', [$this, 'fetch_tax_variation']);
 
         //add ajax action
-        add_action('wp_enqueue_scripts', [$this, 'enqueue_gold_price_shortcode_scripts']);
+        add_action('wp_enqueue_scripts', [$this, 'enqueue_custom_scripts']);
     }
 
     public function get_gold_price($atts)
@@ -52,111 +66,92 @@ class GoldShortCodes extends GetGoldPrice
         return $output;
     }
 
-    // product get wages price
-
-    public function get_product_wages()
+    public function fetch_profit_variation()
     {
-
-        // Fetch all published product IDs
-        $product_ids = $this->get_all_products_ids();
-
-        foreach ($product_ids as $product_id) {
-
-
-            $custom_field_wages = floatval(get_post_meta($product_id, 'custom_field_wages', true));
-
-            // Get the product object
-            $product_var_id = wc_get_product($product_id);
-
-            // Check if the product is a variable product
-            if ($product_var_id && $product_var_id->is_type('variable')) {
-                $variation_ids = $product_var_id->get_children(); // Get all variation IDs
-
-                // Loop through each variation
-                foreach ($variation_ids as $variation_id) {
-
-                    $custom_field_wages = get_post_meta($variation_id, 'custom_field_wages_variation', true);
-                    return $custom_field_wages;
-                }
-            }
-            return $custom_field_wages;
-        }
-    }
-    public function get_product_profit()
-    {
-        // Initialize an array to hold all profits
-        $profits = [];
-
-        // Fetch all published product IDs
-        $product_ids = $this->get_all_products_ids();
-
-        foreach ($product_ids as $product_id) {
-            // Get the product object
-            $product = wc_get_product($product_id);
-
-            // Check if the product is a variable product
-            if ($product && $product->is_type('variable')) {
-                $variation_ids = $product->get_children(); // Get all variation IDs
-
-                // Loop through each variation
-                foreach ($variation_ids as $variation_id) {
-                    // Get the current variation object
-                    $variation = wc_get_product($variation_id);;
-                    //var_dump($variation_id);
-                    // Get weight and profit for the variation
-                    $weight = $variation->get_weight();
-                    // $attributes = $variation->get_attributes();
-
-                    // $attributes = $variation->get_attributes();
-
-                    // // Assuming $attributes contains the attribute data
-                    // $attributes = $variation->get_attributes();
-                    // foreach ($attributes as $attribute_name => $attribute_value) {
-                    //     var_dump(sanitize_key($attribute_value));
-                    // }
-
-                    //var_dump($default_attributes);
-
-                    $custom_field_profit_variation = get_post_meta($variation_id, 'custom_field_profit_variation', true);
-
-                    // Store variation profits keyed by weight if needed
-                    if (!empty($weight)) { // Ensure weight is not empty
-                        $profits[$weight] = $custom_field_profit_variation;
-                        if (isset($weight))
-                            //var_dump($profits[$weight]);
-                            echo $profits[$weight];
-                        // Debug output
-
-                    }
-                }
-            } else {
-                // For simple products or other types, retrieve profit
-                $custom_field_wages = get_post_meta($product_id, 'custom_field_profit', true);
-                $profits[$product_id] = $custom_field_wages;
-            }
+        if (!isset($_POST['variation_id'])) {
+            wp_send_json_error('No Variation ID provided.');
+            wp_die();
         }
 
-        return $profits; // Return all profits collected
-    }
+        $variation_id = intval($_POST['variation_id']);
 
-    public function handle_get_product_profit()
-    {
-        // Check for received product_id
-        if (isset($_POST['product_id'])) {
-            $product_id = intval($_POST['product_id']);
 
-            // Compute profit using your existing function
-            $profits = $this->get_product_profit(); // You might want to modify this to directly return profit for the $product_id
-            var_dump($profits);
-            // Return profit for the corresponding product_id
-            if (isset($profits[$product_id])) {
-                echo esc_html($profits[$product_id]);
-            } else {
-                echo 'No profit data available.';
-            }
+        $profit = get_post_meta($variation_id, 'custom_field_profit_variation', true);
+
+
+        if ($profit) {
+            echo esc_html($profit);
+        } else {
+            echo esc_html__('0', 'profit_variation_not_available');
         }
-        wp_die(); // Always include this to properly end the AJAX request
+
+        wp_die();
     }
+
+    public function fetch_wages_variation()
+    {
+        if (!isset($_POST['variation_id'])) {
+            wp_send_json_error('No Variation ID provided.');
+            wp_die();
+        }
+
+        $variation_id = intval($_POST['variation_id']);
+
+        $wages = get_post_meta($variation_id, 'custom_field_wages_variation', true);
+
+        if ($wages) {
+            echo esc_html($wages);
+        } else {
+            echo esc_html__('0', 'wages_variation_not_available');
+        }
+
+        wp_die();
+    }
+
+    public function fetch_tax_variation()
+    {
+        if (!isset($_POST['variation_id'])) {
+            wp_send_json_error('No Variation ID provided.');
+            wp_die();
+        }
+
+        $variation_id = intval($_POST['variation_id']);
+
+
+        $tax = get_post_meta($variation_id, 'custom_field_tax_variation', true);
+
+
+        if ($tax) {
+            echo esc_html($tax);
+        } else {
+            echo esc_html__('0', 'tax_variation_not_available');
+        }
+
+        wp_die();
+    }
+
+    public function fetch_addons_variation()
+    {
+        if (!isset($_POST['variation_id'])) {
+            wp_send_json_error('No Variation ID provided.');
+            wp_die();
+        }
+
+        $variation_id = intval($_POST['variation_id']);
+
+        $this->display_profit_shortcode($variation_id);
+
+        $addons = get_post_meta($variation_id, 'custom_field_addons_variation', true);
+
+
+        if ($addons) {
+            echo esc_html($addons);
+        } else {
+            echo esc_html__('0', 'addon_variation_not_available');
+        }
+        wp_die();
+    }
+
 
     public function get_all_products_ids()
     {
@@ -169,14 +164,88 @@ class GoldShortCodes extends GetGoldPrice
         return wp_list_pluck($products, 'ID'); // Get an array of product IDs
     }
 
-    public function enqueue_gold_price_shortcode_scripts()
+    public function enqueue_custom_scripts()
     {
-        wp_enqueue_script('my-ajax-script', GLP_URL . 'assets/js/gold-shortcode-script.js', array('jquery'), null, true);
+        wp_enqueue_script('custom-ajax', GLP_URL . 'assets/js/gold-shortcode-script.js', array('jquery'), null, true);
+        wp_localize_script('custom-ajax', 'ajaxurl', admin_url('admin-ajax.php'));
+    }
+    public function display_profit_shortcode()
+    {
+        $product_id = get_the_ID();
+        $product_var_id = wc_get_product($product_id);
+        if ($product_var_id->is_type('variable')) {
+            return 'سود: <p id="profit-display"></p> درصد'; // Shortcode will just produce the HTML element for updating via AJAX
+        }
+    }
 
-        // Localize the script to make `ajaxurl` available
-        wp_localize_script('my-ajax-script', 'ajaxurl', admin_url('admin-ajax.php'));
+    public function display_wages_shortcode()
+    {
+        $product_id = get_the_ID();
+        $product_var_id = wc_get_product($product_id);
+        if ($product_var_id->is_type('variable')) {
+            return 'اجرت ساخت: <p id="wages-display"></p> درصد';
+        }
+    }
+
+    public function display_tax_shortcode()
+    {
+        $product_id = get_the_ID();
+        $product_var_id = wc_get_product($product_id);
+        if ($product_var_id->is_type('variable')) {
+            return 'مالیات: <p id="tax-display"></p> درصد';
+        }
+    }
+
+    public function display_addons_shortcode()
+    {
+        $product_id = get_the_ID();
+        $product_var_id = wc_get_product($product_id);
+        if ($product_var_id->is_type('variable')) {
+            return 'متعلقات اضافی (سنگ، مروارید،چرم و...): <p id="addons-display"></p> تومان';
+        }
+    }
+    public function displays_regular_profit_shortcode()
+    {
+
+        $product_id = get_the_ID(); // if you’re sure it’s a product page
+        $profit = get_post_meta($product_id, 'custom_field_profit', true);
+        if ($profit) {
+            echo '<p>سود : ' . $profit . ' درصد</p>';
+        }
+        return "";
+    }
+    public function displays_regular_wages_shortcode()
+    {
+
+        $product_id = get_the_ID(); // if you’re sure it’s a product page
+        $wages = get_post_meta($product_id, 'custom_field_wages', true);
+        if ($wages) {
+            echo '<p>اجرت ساخت : ' . $wages . ' درصد</p>';
+        }
+        return "";
+    }
+    public function displays_regular_tax_shortcode()
+    {
+
+        $product_id = get_the_ID(); // if you’re sure it’s a product page
+
+        $tax = get_post_meta($product_id, 'custom_field_tax', true);
+        if ($tax) {
+            echo '<p>مالیات : ' . $tax . ' درصد</p>';
+        }
+        return "";
+    }
+    public function displays_regular_addons_shortcode()
+    {
+
+        $product_id = get_the_ID(); // if you’re sure it’s a product page
+
+        $addons = get_post_meta($product_id, 'custom_field_addons', true);
+        if ($addons === 0) {
+            return "";
+        }
+        echo '<p>متعلقات اضافی: ' . $addons . ' تومان</p>';
     }
 }
-
 // Initialize the shortcode class
 new GoldShortCodes();

@@ -1,4 +1,5 @@
 <?php
+defined('ABSPATH') || exit;
 class CalculatorGoldPrice extends GetGoldPrice
 {
     public function __construct() {}

@@ -1,0 +1,25 @@
+#gold-calculator{
+    
+        border: 1px solid #ccc;
+        padding: 20px;
+        margin: 20px 0;
+        width: 600px;
+        border-radius: 30px;
+        background-color: #465a52;
+        direction: rtl;
+}
+.gold-calculator-title h3{
+    color: #e2e2e2;
+}
+
+.gold-calculator-label{
+    color: #e2e2e2;
+}
+
+.gold-calculator-input{
+    width: 200px;
+    height: 35px;
+    border-radius: 9px;
+    border: 1px solid #e2e2e2;
+    margin-right: 50px;
+}
