@@ -77,22 +77,8 @@ class CalculateRegular extends GetGoldPrice
         $subtotal = round($this->calculation_current_product_gold() + $this->calculation_calculate_wages() + $this->calculation_calculate_profit() + $this->calculation_calculate_tax() + $this->get_addons(), -3);
         update_post_meta($post_id, 'wp_gold_price_subtotal', $subtotal);
 
-        // Check if the product is tagged as a pre-order
-        $is_preorder = get_post_meta($post_id, '_stock_status', true);
-        //error_log("is pre order : " . $is_preorder);
-        if ($is_preorder == "onbackorder") {
-
-            $price_after_discount  = floatval(0.1 * $subtotal);
-            //error_log($price_after_discount);
-            $pre_order_fee = $subtotal - $price_after_discount;
-            //error_log("pre order price is : " . $pre_order_fee);
-
-            $this->product->set_regular_price($pre_order_fee);
-            $this->product->save();
-        } else {
-            $this->product->set_regular_price($subtotal);
-            $this->product->save();
-        }
+        $this->product->set_regular_price($subtotal);
+        $this->product->save();
     }
     public function get_wages_percent()
     {

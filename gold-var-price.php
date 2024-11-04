@@ -173,28 +173,13 @@ class GoldVarPrice extends GetGoldPrice
             update_post_meta($child_id, 'wp_gold_price_subtotal', $subtotal);
             //error_log('subtotal: ' . $subtotal);
             // Set the variation prices
-            $is_preorder = get_post_meta($child_id, '_stock_status', true);
+            $product_variation->set_regular_price($subtotal); // Set the regular price
+            //$product_variation->set_sale_price(''); // Optionally set a sale price
+            //error_log('subtotal: ' . $product_variation->set_regular_price($subtotal));
+            $product_variation->save(); // Save the variation
+            //Log the saved price
+            //error_log('Saved price: ' . round($subtotal) . ' for variation ID: ' . $post_id);
 
-            if ($is_preorder == "onbackorder") {
-
-                $price_after_discount  = floatval(0.1 * $subtotal);
-                //error_log($price_after_discount);
-                $pre_order_fee = $subtotal - $price_after_discount;
-                //error_log("pre order price is : " . $pre_order_fee);
-                $product_variation->set_regular_price($pre_order_fee); // Set the regular price
-                //$product_variation->set_sale_price(''); // Optionally set a sale price
-                //error_log('subtotal: ' . $product_variation->set_regular_price($subtotal));
-                $product_variation->save(); // Save the variation
-                //Log the saved price
-                error_log('Saved price: ' . round($subtotal) . ' for variation ID: ' . $post_id);
-            } else {
-                $product_variation->set_regular_price($subtotal); // Set the regular price
-                //$product_variation->set_sale_price(''); // Optionally set a sale price
-                //error_log('subtotal: ' . $product_variation->set_regular_price($subtotal));
-                $product_variation->save(); // Save the variation
-                //Log the saved price
-                //error_log('Saved price: ' . round($subtotal) . ' for variation ID: ' . $post_id);
-            }
         } else {
             //error_log('API usage not enabled for variation ID: ' . $post_id);
         }

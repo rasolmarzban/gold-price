@@ -33,6 +33,7 @@ class GoldPrice
         include 'shortcodes.php';
         include 'refresh-price.php';
         include 'show-price.php';
+        include 'add-to-cart-price.php';
         include GLP_TMP . 'users/calculator-gold-price.php';
         if (is_admin()) {
             include GLP_INC . 'admin/admin-menu.php';
